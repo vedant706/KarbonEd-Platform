@@ -4,43 +4,90 @@ import { CarbonCalculator } from './components/Calculator.jsx';
 import { jsPDF } from 'jspdf';
 
 const generateCertificate = (transaction, user) => {
-    const doc = new jsPDF({ orientation: "landscape", unit: "in", format: "letter" });
-    doc.setFillColor(244, 243, 237);
-    doc.rect(0, 0, 11, 8.5, "F");
-    doc.setDrawColor(26, 33, 21);
-    doc.setLineWidth(0.1);
-    doc.rect(0.5, 0.5, 10, 7.5);
-    doc.setTextColor(26, 33, 21);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(40);
-    doc.text("Certificate of Carbon Offset", 5.5, 2, null, null, "center");
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "normal");
-    doc.text("This certifies that", 5.5, 3, null, null, "center");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(28);
-    doc.setTextColor(59, 130, 102); 
-    doc.text(user.name.toUpperCase(), 5.5, 3.8, null, null, "center");
-    doc.setTextColor(26, 33, 21);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(14);
-    doc.text(`has successfully offset`, 5.5, 4.5, null, null, "center");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
-    doc.text(`${transaction.amountPurchased} Metric Tons of CO2`, 5.5, 5.2, null, null, "center");
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(14);
-    doc.text(`by supporting the verified project:`, 5.5, 5.9, null, null, "center");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.text(`"${transaction.projectName}"`, 5.5, 6.5, null, null, "center");
-    doc.setFontSize(10);
-    doc.setTextColor(139, 147, 125); 
-    const dateStr = new Date(transaction.purchaseDate).toLocaleDateString();
-    doc.text(`Date of Issue: ${dateStr}`, 1, 7.5);
-    doc.text(`Transaction ID: ${transaction._id}`, 6.5, 7.5);
-    doc.text(`KarbonEd Educational Simulation`, 5.5, 7.5, null, null, "center");
-    doc.save(`KarbonEd_Offset_${transaction._id.substring(0,6)}.pdf`);
+    // Set to 8.5 x 11 inches Portrait
+    const doc = new jsPDF({ orientation: "portrait", unit: "in", format: "letter" });
+
+    // Load the Canva template from your public folder
+    const img = new Image();
+    img.src = '/certificate-bg.png';
+
+    img.onload = () => {
+        // Draw the background image across the entire page
+        doc.addImage(img, 'PNG', 0, 0, 8.5, 11);
+
+        // --- CUSTOM COLOR PALETTE TO MATCH THE LEAVES ---
+        const darkGreen = [21, 61, 35];     // Deep forest green for main titles
+        const lightGreen = [82, 121, 95];   // Softer green for secondary text
+        const gray = [100, 100, 100];       // Clean gray for descriptions
+
+        const centerX = 4.25; // Exact middle of the page
+
+        // 1. Platform Brand (Small at the top)
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(...lightGreen);
+        doc.text("KARBONED PLATFORM", centerX, 2.5, null, null, "center");
+
+        // 2. Main Title
+        doc.setFont("times", "bold");
+        doc.setFontSize(28);
+        doc.setTextColor(...darkGreen);
+        doc.text("CERTIFICATE OF CARBON OFFSET", centerX, 3.2, null, null, "center");
+
+        // 3. Subtitle
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(12);
+        doc.setTextColor(...gray);
+        doc.text("This document proudly certifies that", centerX, 4.0, null, null, "center");
+
+        // 4. User Name (The Buyer)
+        doc.setFont("times", "italic");
+        doc.setFontSize(36);
+        doc.setTextColor(...darkGreen);
+        doc.text(user.name.toUpperCase(), centerX, 4.8, null, null, "center");
+
+        // Decorative Line under the name
+        doc.setDrawColor(...lightGreen);
+        doc.setLineWidth(0.02);
+        doc.line(2.5, 5.0, 6.0, 5.0);
+
+        // 5. Action Text
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(12);
+        doc.setTextColor(...gray);
+        doc.text("has successfully retired", centerX, 5.5, null, null, "center");
+
+        // 6. Tonnage Impact
+        doc.setFont("times", "bold");
+        doc.setFontSize(34);
+        doc.setTextColor(...darkGreen);
+        doc.text(`${transaction.amountPurchased} TONNES CO2e`, centerX, 6.3, null, null, "center");
+
+        // 7. Project Details
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(...gray);
+        doc.text(`VERIFIED PROJECT: ${transaction.projectName.toUpperCase()}`, centerX, 7.3, null, null, "center");
+        doc.text(`ORIGINATOR: ${transaction.companyName.toUpperCase()}`, centerX, 7.6, null, null, "center");
+        
+        // 8. Footer: Ledger & Date (Pushed to the bottom)
+        const dateStr = new Date(transaction.purchaseDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        const fakeHash = `0x${transaction._id}A8F9B2C4D...`; 
+        
+        doc.setFont("courier", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(...lightGreen);
+        doc.text(`DATE OF RETIREMENT: ${dateStr.toUpperCase()}`, centerX, 9.0, null, null, "center");
+        doc.text(`SECURE LEDGER HASH: ${fakeHash}`, centerX, 9.2, null, null, "center");
+
+        // Save the final PDF
+        doc.save(`KarbonEd_Certificate_${transaction._id.substring(0,6)}.pdf`);
+    };
+    
+    img.onerror = () => {
+        console.error("Could not load certificate-bg.png. Make sure it is in the public folder!");
+        alert("Failed to load certificate background. Please check the public folder.");
+    };
 };
 
 export const AdminDashboard = ({ token, credits, setCredits }) => {
